@@ -61,7 +61,7 @@ subnet_id=`aws ec2 create-subnet \
 	&& echo "associated a route table with a subnet" || exit 1
 	
 # create security group
-sg_id=`aws ec2 create-security-group \
+sg_id1=`aws ec2 create-security-group \
 	--group-name Ec2SecurityGroup \
 	--description "My security group" \
 	--vpc-id $vpc_id \
@@ -71,12 +71,29 @@ sg_id=`aws ec2 create-security-group \
 	
 # open the SSH port(22) in the ingress rules
 (aws ec2 authorize-security-group-ingress \
-	--group-id $sg_id \
+	--group-id $sg_id1 \
 	--protocol tcp \
 	--port 22 \
 	--cidr 0.0.0.0/0) \
 	&& echo "opened the SSH port" || exit 1
 	
+# create security group
+sg_id2=`aws ec2 create-security-group \
+        --group-name Ec2SecurityGroup \
+        --description "My security group" \
+        --vpc-id $vpc_id \
+        --query 'GroupId' \
+        --output text` \
+        && echo "Security Group created" || exit 1
+
+# open the SSH port(80) in the ingress rules
+(aws ec2 authorize-security-group-ingress \
+        --group-id $sg_id2 \
+        --protocol tcp \
+        --port 80 \
+        --cidr 0.0.0.0/0) \
+        && echo "opened the SSH port" || exit 1
+
 # create ec2 instance in our vpc
 (aws ec2 run-instances \
 	--image-id ami-00eeedc4036573771 \
@@ -84,5 +101,5 @@ sg_id=`aws ec2 create-security-group \
 	--instance-type t2.micro \
 	--key-name MyKeyPair \
 	--subnet-id $subnet_id \
-	--security-group-ids $sg_id) \
+	--security-group-ids ($sg_id1 $sg_id2) ) \
 	&& echo "created an ec2 instance" || exit 1
