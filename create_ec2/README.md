@@ -1,1 +1,2 @@
-incomplete application to be done
+incomplete 
+the logic of main.sh to be added
